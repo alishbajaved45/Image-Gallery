@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Gallery Curated Plates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#221e1a;
+    --ink-soft:#544c40;
+    --muted:#948a7a;
+    --bg:#fbf8f3;
+    --surface:#ffffff;
+    --line: rgba(34,30,26,0.08);
+    --gold:#a6813f;
+    --gold-soft:#cbab77;
+    --gold-wash: rgba(166,129,63,0.10);
+    --shadow-1: 0 1px 2px rgba(34,30,26,0.06), 0 1px 1px rgba(34,30,26,0.04);
+    --shadow-2: 0 18px 40px -14px rgba(34,30,26,0.22), 0 4px 10px -4px rgba(34,30,26,0.10);
+    --shadow-lb: 0 40px 100px -20px rgba(20,17,14,0.5), 0 10px 30px -10px rgba(20,17,14,0.35);
+    --radius-pill: 999px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{ background:var(--gold-soft); color:var(--ink); }
+  a{ color:inherit; }
+
+  
+  .sheet{
+    max-width:1100px;
+    margin:0 auto;
+    padding: 56px 40px 90px;
+  }
+
+  .masthead{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:16px;
+    margin-bottom: 32px;
+  }
+  .eyebrow{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  h1.title{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:clamp(44px, 6.4vw, 78px);
+    line-height:1.02;
+    letter-spacing:-0.015em;
+    margin:0;
+    color:var(--ink);
+  }
+  h1.title em{
+    font-style:italic;
+    font-weight:400;
+    color:var(--gold);
+  }
+  .gold-rule{
+    width:64px;
+    height:2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin:2px 0;
+  }
+  .subhead{
+    max-width:520px;
+    color:var(--muted);
+    font-size:16px;
+    line-height:1.7;
+    font-weight:400;
+  }
+
+
+  .controls{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    margin-bottom: 24px;
+  }
+  .filters{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:10px;
+    background:var(--surface);
+    padding:6px;
+    border-radius:var(--radius-pill);
+    box-shadow:var(--shadow-1);
+    border:1px solid var(--line);
+  }
+  .filter-btn{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:0.02em;
+    background:transparent;
+    border:none;
+    color:var(--ink-soft);
+    padding:10px 20px;
+    border-radius:var(--radius-pill);
+    cursor:pointer;
+    transition: background .3s ease, color .3s ease, box-shadow .3s ease;
+  }
+  .filter-btn:hover{
+    color:var(--ink);
+    background: var(--gold-wash);
+  }
+  .filter-btn.active{
+    color:#fff;
+    background: linear-gradient(135deg, var(--gold), #8a6a34);
+    box-shadow: 0 6px 16px -4px rgba(166,129,63,0.5);
+  }
+  .frame-count{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.04em;
+  }
+
+ 
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+  }
+  .frame{
+    position:relative;
+    height:290px;
+    overflow:hidden;
+    background:var(--surface);
+    border-radius:14px;
+    cursor:pointer;
+    box-shadow: var(--shadow-1);
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .frame:hover{
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-2);
+  }
+  .frame img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+    transform: scale(1);
+    transition: transform .3s ease;
+  }
+  .frame:hover img{ transform: scale(1.045); }
+
+  .frame::after{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(20,17,14,0) 45%, rgba(20,17,14,0.78) 100%);
+    opacity:0;
+    transition: opacity .4s ease;
+  }
+  .frame:hover::after{ opacity:1; }
+
+  /* corner brackets — signature element, evokes a gallery mat/frame */
+  .frame .corner{
+    position:absolute;
+    width:22px; height:22px;
+    border-color:#fff;
+    opacity:0;
+    transition: opacity .4s ease, transform .4s ease;
+    z-index:2;
+  }
+  .corner.tl{ top:14px; left:14px; border-top:1.5px solid; border-left:1.5px solid; transform:translate(6px,6px); }
+  .corner.br{ bottom:14px; right:14px; border-bottom:1.5px solid; border-right:1.5px solid; transform:translate(-6px,-6px); }
+  .frame:hover .corner{ opacity:0.9; transform:translate(0,0); }
+
+  .frame-meta{
+    position:absolute;
+    left:18px; right:18px; bottom:16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    opacity:0;
+    transform: translateY(8px);
+    transition: opacity .4s ease, transform .4s ease;
+    z-index:2;
+  }
+  .frame:hover .frame-meta{ opacity:1; transform:translateY(0); }
+  .frame-num{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:13px;
+    color:var(--gold-soft);
+    letter-spacing:0.03em;
+  }
+  .frame-cap{
+    font-family:'Fraunces', serif;
+    font-size:15px;
+    color:#fff;
+    text-align:right;
+    line-height:1.3;
+    max-width:70%;
+  }
+  .frame.hide{ display:none; }
+
+ 
+  .foot-note{
+    margin-top:56px;
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.02em;
+    display:flex;
+    justify-content:center;
+    text-align:center;
+    gap:8px;
+    border-top:1px solid var(--line);
+    padding-top:28px;
+  }
+
+  
+  .lightbox{
+    position:fixed; inset:0;
+    background: rgba(20,17,14,0.72);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    visibility:hidden;
+    transition: opacity .35s ease;
+    z-index:100;
+    padding: 24px;
+  }
+  .lightbox.open{ opacity:1; visibility:visible; }
+
+  .lb-stage{
+    position:relative;
+    width:100%;
+    max-width: 1020px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
+    transform: scale(.97);
+    transition: transform .35s cubic-bezier(.2,.7,.2,1);
+  }
+  .lightbox.open .lb-stage{ transform: scale(1); }
+
+  .lb-frame{
+    position:relative;
+    width:100%;
+    max-height:72vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--surface);
+    border-radius: 22px;
+    overflow:hidden;
+    box-shadow: var(--shadow-lb);
+  }
+  .lb-frame img{
+    max-width:100%;
+    max-height:72vh;
+    display:block;
+    opacity:0;
+    transform: scale(.985);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .lb-frame img.show{ opacity:1; transform:scale(1); }
+
+  .lb-info{
+    display:flex;
+    width:100%;
+    justify-content:space-between;
+    align-items:baseline;
+    color:rgba(255,255,255,0.65);
+    font-size:12.5px;
+    letter-spacing:0.03em;
+    padding: 0 6px;
+  }
+  .lb-caption{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    color:#fff;
+    font-size:18px;
+    letter-spacing:0;
+  }
+
+  .lb-close{
+    position:absolute;
+    top:-52px; right:0;
+    background: rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.16);
+    color:#fff;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:0.06em;
+    cursor:pointer;
+    padding:9px 16px;
+    border-radius:var(--radius-pill);
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .lb-close:hover{ background: var(--gold); border-color:var(--gold); }
+
+  .lb-nav{
+    position:absolute;
+    top:50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.95);
+    border:none;
+    color:var(--ink);
+    width:48px; height:48px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:19px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 8px 24px rgba(20,17,14,0.35);
+    transition: background .25s ease, color .25s ease, transform .2s ease;
+  }
+  .lb-nav:hover{ background:var(--gold); color:#fff; transform: translateY(-50%) scale(1.06); }
+  .lb-prev{ left:-14px; }
+  .lb-next{ right:-14px; }
+
+  @media (max-width: 720px){
+    .lb-nav{ width:40px; height:40px; font-size:16px; }
+    .lb-prev{ left:-4px; }
+    .lb-next{ right:-4px; }
+    .lb-close{ top:-46px; }
+  }
+
+ 
+  @media (max-width: 760px){
+    .sheet{ padding: 44px 22px 60px; }
+    .grid{ grid-template-columns: repeat(2, 1fr); gap:16px; }
+    .frame-cap{ display:none; }
+    .lb-info{ flex-direction:column; gap:6px; }
+  }
+  @media (max-width: 460px){
+    .grid{ grid-template-columns: repeat(1, 1fr); }
+    .filters{ gap:4px; }
+    .filter-btn{ padding:9px 14px; font-size:12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+
+  button:focus-visible, .frame:focus-visible{
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <h1 class="title">Image <em>Gallery</em></h1>
+    <div class="gold-rule"></div>
+  </header>
+
+  <div class="controls">
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-cat="all">All</button>
+      <button class="filter-btn" data-cat="landscape">Landscape</button>
+      <button class="filter-btn" data-cat="architecture">Architecture</button>
+      <button class="filter-btn" data-cat="portrait">Portrait</button>
+      <button class="filter-btn" data-cat="street">Street</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="foot-note">
+    <span>Click a plate to open the viewer &nbsp;·&nbsp; Use ← → to navigate &nbsp;·&nbsp; Esc to close</span>
+  </div>
+
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <div class="lb-stage">
+    <button class="lb-close" id="lbClose">Close ✕</button>
+    <div class="lb-frame">
+      <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous image">‹</button>
+      <img id="lbImg" src="" alt="">
+      <button class="lb-nav lb-next" id="lbNext" aria-label="Next image">›</button>
+    </div>
+    <div class="lb-info">
+      <span id="lbCounter">Plate I / XXIII</span>
+      <span class="lb-caption" id="lbCaption">—</span>
+      <span id="lbCat">—</span>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  function toRoman(num){
+    const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    let res = '';
+    for(const [v,s] of map){ while(num >= v){ res += s; num -= v; } }
+    return res;
+  }
+
+
+  const photos = [
+    {seed:'ridge-01', cat:'landscape', caption:'Ridge line, first light'},
+    {seed:'valley-02', cat:'landscape', caption:'Valley fog, held its shape'},
+    {seed:'coast-03', cat:'landscape', caption:'Low tide, no one out yet'},
+    {seed:'dune-04', cat:'landscape', caption:'Wind-carved, quiet'},
+    {seed:'forest-05', cat:'landscape', caption:'Understory, green on green'},
+    {seed:'lake-06', cat:'landscape', caption:'Still water, held the sky'},
+    {seed:'facade-07', cat:'architecture', caption:'Stairwell, repeating'},
+    {seed:'atrium-08', cat:'architecture', caption:'Glass roof, noon shadow'},
+    {seed:'concrete-09', cat:'architecture', caption:'Brutalist corner, hard light'},
+    {seed:'arches-10', cat:'architecture', caption:'Arcade, counted twelve'},
+    {seed:'lobby-11', cat:'architecture', caption:'Marble lobby, cold tone'},
+    {seed:'rooftop-12', cat:'architecture', caption:'Rooftop line, city edge'},
+    {seed:'portrait-13', cat:'portrait', caption:'Window light, unposed'},
+    {seed:'portrait-14', cat:'portrait', caption:'Backstage, between sets'},
+    {seed:'portrait-15', cat:'portrait', caption:'Studio, single softbox'},
+    {seed:'portrait-16', cat:'portrait', caption:'Doorway, half in shade'},
+    {seed:'portrait-17', cat:'portrait', caption:'Market stall, caught mid-laugh'},
+    {seed:'portrait-18', cat:'portrait', caption:'Platform, waiting'},
+    {seed:'street-city-19', cat:'street', caption:'Crosswalk, rush hour'},
+    {seed:'street-alley-20', cat:'street', caption:'Alley light, steam rising'},
+    {seed:'street-kiosk-21', cat:'street', caption:'Newsstand, corner of 9th'},
+    {seed:'street-transit-22', cat:'street', caption:'Platform, last train'},
+    {seed:'street-market-23', cat:'street', caption:'Night market, neon spill'},
+    {seed:'skyline-24', cat:'architecture', caption:'Skyline, blue hour'},
+    {seed:'harbor-25', cat:'landscape', caption:'Harbor, still before dawn'}
+  ];
+
+  const grid = document.getElementById('grid');
+
+  photos.forEach((p, i) => {
+    p.thumb = `https://picsum.photos/seed/${p.seed}/700/860`;
+    p.full  = `https://picsum.photos/seed/${p.seed}/1400/1000`;
+    p.index = i;
+
+    const el = document.createElement('div');
+    el.className = 'frame';
+    el.dataset.cat = p.cat;
+    el.tabIndex = 0;
+    el.innerHTML = `
+      <span class="corner tl"></span>
+      <span class="corner br"></span>
+      <img src="${p.thumb}" alt="${p.caption}" loading="lazy">
+      <div class="frame-meta">
+        <span class="frame-num">${toRoman(i+1)}</span>
+        <span class="frame-cap">${p.caption}</span>
+      </div>
+    `;
+    el.addEventListener('click', () => openLightbox(i));
+    el.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(i); } });
+    grid.appendChild(el);
+  });
+
+ 
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  let activeCat = 'all';
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCat = btn.dataset.cat;
+      applyFilter();
+    });
+  });
+
+  function applyFilter(){
+    document.querySelectorAll('.frame').forEach(f => {
+      const match = activeCat === 'all' || f.dataset.cat === activeCat;
+      f.classList.toggle('hide', !match);
+    });
+  }
+
+  const lightbox = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lbImg');
+  const lbCounter = document.getElementById('lbCounter');
+  const lbCaption = document.getElementById('lbCaption');
+  const lbCat = document.getElementById('lbCat');
+  let currentIndex = 0;
+
+  function visiblePhotos(){
+    return activeCat === 'all' ? photos : photos.filter(p => p.cat === activeCat);
+  }
+
+  function openLightbox(globalIndex){
+    const list = visiblePhotos();
+    const photo = photos[globalIndex];
+    currentIndex = list.findIndex(p => p.seed === photo.seed);
+    if(currentIndex === -1) currentIndex = 0;
+    renderLightbox();
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function renderLightbox(){
+    const list = visiblePhotos();
+    const p = list[currentIndex];
+    lbImg.classList.remove('show');
+    const img = new Image();
+    img.onload = () => {
+      lbImg.src = p.full;
+      requestAnimationFrame(() => lbImg.classList.add('show'));
+    };
+    img.src = p.full;
+    lbImg.alt = p.caption;
+    lbCounter.textContent = `Plate ${toRoman(currentIndex+1)} / ${toRoman(list.length)}`;
+    lbCaption.textContent = p.caption;
+    lbCat.textContent = p.cat;
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function nextImage(){
+    const list = visiblePhotos();
+    currentIndex = (currentIndex + 1) % list.length;
+    renderLightbox();
+  }
+  function prevImage(){
+    const list = visiblePhotos();
+    currentIndex = (currentIndex - 1 + list.length) % list.length;
+    renderLightbox();
+  }
+
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  document.getElementById('lbNext').addEventListener('click', nextImage);
+  document.getElementById('lbPrev').addEventListener('click', prevImage);
+
+  lightbox.addEventListener('click', (e) => {
+    if(e.target === lightbox) closeLightbox();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(!lightbox.classList.contains('open')) return;
+    if(e.key === 'Escape') closeLightbox();
+    if(e.key === 'ArrowRight') nextImage();
+    if(e.key === 'ArrowLeft') prevImage();
+  });
+
+  applyFilter();
+</script>
+
+</body>
+</html>
