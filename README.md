@@ -1,4 +1,4 @@
-# Image Gallery — CodeAlpha Web Development Internship (Task 1)
+# Image Gallery
 
 A fully responsive, premium-styled image gallery built from scratch using **vanilla HTML, CSS, and JavaScript**  no frameworks, no external libraries.
 
