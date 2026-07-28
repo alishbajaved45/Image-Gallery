@@ -1,6 +1,6 @@
 # Image Gallery — CodeAlpha Web Development Internship (Task 1)
 
-A fully responsive, premium-styled image gallery built from scratch using **vanilla HTML, CSS, and JavaScript** — no frameworks, no external libraries.
+A fully responsive, premium-styled image gallery built from scratch using **vanilla HTML, CSS, and JavaScript**  no frameworks, no external libraries.
 
 This project focuses on core front-end fundamentals: layout systems, DOM manipulation, and interaction design, without leaning on a framework to handle state or rendering.
 
@@ -70,8 +70,8 @@ No other code changes are needed — the grid and lightbox both read from this a
 
 ## 📚 What I Learned
 
-Building this without a framework meant handling state manually — tracking the active category filter and the current lightbox index, and keeping both in sync as the user interacts with the page. It was a useful exercise in writing clean, maintainable vanilla JS before reaching for a library to do it for me.
+Building this without a framework meant handling state manually tracking the active category filter and the current lightbox index, and keeping both in sync as the user interacts with the page. It was a useful exercise in writing clean, maintainable vanilla JS before reaching for a library to do it for me.
 
 ---
 
-*Built as part of the CodeAlpha Web Development Internship — Task 1: Image Gallery.*
+*Built as part of the CodeAlpha Web Development Internship  Task 1: Image Gallery.*
