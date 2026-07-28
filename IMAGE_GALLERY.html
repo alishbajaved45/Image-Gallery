@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image Gallery Curated Plates</title>
+<title>Image Gallery — Curated Plates</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -37,13 +37,14 @@
   ::selection{ background:var(--gold-soft); color:var(--ink); }
   a{ color:inherit; }
 
-  
+  /* ---------- layout shell ---------- */
   .sheet{
     max-width:1100px;
     margin:0 auto;
     padding: 56px 40px 90px;
   }
 
+  /* ---------- header ---------- */
   .masthead{
     display:flex;
     flex-direction:column;
@@ -87,7 +88,7 @@
     font-weight:400;
   }
 
-
+  /* ---------- filter pills ---------- */
   .controls{
     display:flex;
     flex-direction:column;
@@ -134,7 +135,7 @@
     letter-spacing:0.04em;
   }
 
- 
+  /* ---------- grid ---------- */
   .grid{
     display:grid;
     grid-template-columns: repeat(3, 1fr);
@@ -144,11 +145,17 @@
     position:relative;
     height:290px;
     overflow:hidden;
-    background:var(--surface);
+    background: linear-gradient(100deg, var(--panel-raised) 30%, #ffffff 50%, var(--panel-raised) 70%);
+    background-size: 300% 100%;
+    animation: frame-shimmer 1.4s ease-in-out infinite;
     border-radius:14px;
     cursor:pointer;
     box-shadow: var(--shadow-1);
     transition: transform .3s ease, box-shadow .3s ease;
+  }
+  @keyframes frame-shimmer{
+    0%{ background-position: 100% 0; }
+    100%{ background-position: -100% 0; }
   }
   .frame:hover{
     transform: translateY(-6px);
@@ -159,8 +166,10 @@
     object-fit:cover;
     display:block;
     transform: scale(1);
-    transition: transform .3s ease;
+    opacity:0;
+    transition: transform .3s ease, opacity .4s ease;
   }
+  .frame img.loaded{ opacity:1; }
   .frame:hover img{ transform: scale(1.045); }
 
   .frame::after{
@@ -214,7 +223,7 @@
   }
   .frame.hide{ display:none; }
 
- 
+  /* ---------- footer note ---------- */
   .foot-note{
     margin-top:56px;
     font-size:12px;
@@ -228,7 +237,7 @@
     padding-top:28px;
   }
 
-  
+  /* ---------- lightbox ---------- */
   .lightbox{
     position:fixed; inset:0;
     background: rgba(20,17,14,0.72);
@@ -279,6 +288,22 @@
     transition: opacity .4s ease, transform .4s ease;
   }
   .lb-frame img.show{ opacity:1; transform:scale(1); }
+
+  /* Subtle spinner — only visible during the brief window before an image is cached */
+  .lb-frame::before{
+    content:'';
+    position:absolute;
+    width:34px; height:34px;
+    border-radius:50%;
+    border:2.5px solid rgba(166,129,63,0.25);
+    border-top-color:var(--gold);
+    opacity:0;
+    animation: lb-spin 0.8s linear infinite;
+    pointer-events:none;
+    transition: opacity .2s ease;
+  }
+  .lightbox.loading .lb-frame::before{ opacity:1; }
+  @keyframes lb-spin{ to{ transform: rotate(360deg); } }
 
   .lb-info{
     display:flex;
@@ -340,7 +365,7 @@
     .lb-close{ top:-46px; }
   }
 
- 
+  /* ---------- responsive grid ---------- */
   @media (max-width: 760px){
     .sheet{ padding: 44px 22px 60px; }
     .grid{ grid-template-columns: repeat(2, 1fr); gap:16px; }
@@ -408,7 +433,7 @@
 </div>
 
 <script>
-
+  // ---------- roman numerals (editorial plate numbering) ----------
   function toRoman(num){
     const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
     let res = '';
@@ -416,7 +441,7 @@
     return res;
   }
 
-
+  // ---------- data ----------
   const photos = [
     {seed:'ridge-01', cat:'landscape', caption:'Ridge line, first light'},
     {seed:'valley-02', cat:'landscape', caption:'Valley fog, held its shape'},
@@ -466,11 +491,18 @@
       </div>
     `;
     el.addEventListener('click', () => openLightbox(i));
+    el.addEventListener('mouseenter', () => preloadImage(p.full), { once: true });
     el.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(i); } });
     grid.appendChild(el);
+
+    // Once the thumbnail has actually loaded, fade it in and turn off the shimmer placeholder
+    const thumbImg = el.querySelector('img');
+    const markLoaded = () => { thumbImg.classList.add('loaded'); el.style.animation = 'none'; };
+    if(thumbImg.complete) markLoaded();
+    else thumbImg.addEventListener('load', markLoaded, { once: true });
   });
 
- 
+  // ---------- filters ----------
   const filterBtns = document.querySelectorAll('.filter-btn');
   let activeCat = 'all';
 
@@ -490,15 +522,35 @@
     });
   }
 
+  // ---------- lightbox ----------
   const lightbox = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
   const lbCounter = document.getElementById('lbCounter');
   const lbCaption = document.getElementById('lbCaption');
   const lbCat = document.getElementById('lbCat');
   let currentIndex = 0;
+  const preloadedUrls = new Set();
 
   function visiblePhotos(){
     return activeCat === 'all' ? photos : photos.filter(p => p.cat === activeCat);
+  }
+
+  // Silently fetch an image into the browser cache so it's instant when actually needed
+  function preloadImage(url){
+    if(!url || preloadedUrls.has(url)) return;
+    preloadedUrls.add(url);
+    const img = new Image();
+    img.src = url;
+  }
+
+  // Preload the next and previous images relative to the current lightbox position,
+  // so Next/Prev clicks feel instant instead of waiting on a network request
+  function preloadAdjacent(list, index){
+    if(list.length < 2) return;
+    const nextPhoto = list[(index + 1) % list.length];
+    const prevPhoto = list[(index - 1 + list.length) % list.length];
+    preloadImage(nextPhoto.full);
+    preloadImage(prevPhoto.full);
   }
 
   function openLightbox(globalIndex){
@@ -515,9 +567,13 @@
     const list = visiblePhotos();
     const p = list[currentIndex];
     lbImg.classList.remove('show');
+    lightbox.classList.add('loading');
+
+    // If this image was already preloaded, the browser serves it from cache instantly
     const img = new Image();
     img.onload = () => {
       lbImg.src = p.full;
+      lightbox.classList.remove('loading');
       requestAnimationFrame(() => lbImg.classList.add('show'));
     };
     img.src = p.full;
@@ -525,6 +581,9 @@
     lbCounter.textContent = `Plate ${toRoman(currentIndex+1)} / ${toRoman(list.length)}`;
     lbCaption.textContent = p.caption;
     lbCat.textContent = p.cat;
+
+    // Warm the cache for whichever direction the user is likely to click next
+    preloadAdjacent(list, currentIndex);
   }
 
   function closeLightbox(){
